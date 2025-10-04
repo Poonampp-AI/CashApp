@@ -1,0 +1,144 @@
+
+Extract the following details from the provided text and format them into a JSON response:
+    1. Type of Payment (Credit/Debit)
+    2. Credit Amount
+    3. Effective Date
+    4. Deposit Date
+    5. Instructions type
+    6. Invoice Number and Invoice Date Mappings
+    7. Originator
+Ensure the JSON response is structured exactly as follows, with "" values for any missing fields:
+    
+    extracted_data = {
+        "Type of Payment": "",
+        "Credit Amount": "",
+        "Effective Date": "",
+        "Deposit Date":"",
+        "Instructions type": "WIRE or ACH",
+        "Invoice Number and Invoice Date Mappings": {"":""},
+        "Originator": ""
+    }
+Extract data from the "TransactionData".
+Type of Payment: Determine if the payment type is "Credit" or "Debit" based on the text.
+Credit Amount: Extract the amount associated with the payment.
+Effective Date: Extract the effective date of the transaction and format it as MM/DD/YYYY.
+Instructions type: 1. If you are found "WIRE" and "INSTRUCTIONS" both words in the given text then set "WIRE" for "Instructions type".
+                   2. if you can't see "WIRE" and "INSTRUCTIONS" both words anywhere in the given text then set "ACH" for "Instructions type".
+Invoice Number and Invoice Date Mappings: Extract all invoice numbers and their corresponding dates in MM/DD/YYYY format. Invoice numbers must be 10-digit numbers starting with 80, 16, or 14. If none are found, set this field to {"":""}.
+Originator: Identify the originator or sender of the transaction.
+Additional Fields to Extract and Format from given data:
+
+"extracted_data":<the above extracted dictionary should add here>
+"EDI Report File Path":"",
+"Monthly EDI Report File Path":"",
+"Page No":"",
+"File Name":"",
+"GEN-AI Status":""
+
+File Name: Extract from the reference number in the format 20240429_EDI_1Page_80-81.pdf-16/06/2024, taking the first part before -.
+Page No: If multiple pages are mentioneds, provide them as a list.
+GEN-AI Status: Set to "Passed" if any of the extracted fields contain data; otherwise, set to "Failed".
+
+ Important: 
+    1. Extract the data from given text as per the provided instructions below
+    2. If you are found  "WIRE" and "INSTRUCTIONS" both words in the given text then set "WIRE" for "Instructions type".
+    3. if you can't see  "WIRE" and "INSTRUCTIONS" both words anywhere in the given text then set "ACH" for "Instructions type".
+    4. for your referance we give two examples below, first example is for "instruction type ACH" and 
+        second example is for "instruction type ACH" but second example only contains WIRE not Instruction so it is ACH type
+        and in example 3 contains both the keywords "WIRE" and "INSTRUCTIONS" that's why Instruction type is "WIRE",observ this examples strictlly and give instruction type as WIRE in ouput if you found "WIRE" and "INSTRUCTIONS" keywords in given text.
+    6. most important instruction in case of Invoice Number and Invoice Date, We are interested to see if gen-ai can solve the issue for extracting invoice date and invoice number of each remittance along with other fields to extract.
+    for example all Invoice Number is must be 10 digit number and starting with 80,16 or 14 and if they put date in front of invoice number like 202404158020656181 so 8020656181 is invoice number and 04/15/2024 is invoice date.
+    So, expectation is that we receive invoice date and invoice number in separat dictionary format so that mapping can be recognised.and same extracted dictionary is the value for "Invoice Number and Invoice Date Mappings" in output json.
+    7. invoice number should be 10 digit number don't extract any number as invoice number. if you can't found any invoice number which is 10 digit and start from 80, 16 or 14 then simplly return blank dictionary for example {"":""} for "Invoice Number and Invoice Date Mappings" 
+    8. Note that invoice date and invoice number are sometime in front of "GEN:" and sometime the invoice number is present in front of "WIRE TYPE:" but invoice number is all time 10 digit number only.
+    9. you need to find correct invoice number from all the sample of text, here are some examples
+        1. for example if you found 8020578074802057809980205780808020578230 this number so expected invoice numbers are '8020578074','8020578099','8020578080','8020578230'
+        2. for example if invoice number like 202404158020656181 so 8020656181 is invoice number and 04/15/2024 is invoice date.
+        3. for example if you found 802057627580205765188020576414 this number so expected invoice numbers are '8020576275', '8020576518', '8020576414'
+        4. for example if you found 80205762752080205765188020576414 this number so expected invoice numbers are '8020576275', '8020576518', '8020576414'
+        5. for example if you found 8020572954802057275680205727578020571964802057196680205719678020571683802057 68 this type of number the expected invoice numbers are 7 which are 8020572954, 8020572756, 8020572757, 8020571964, 8020571966, 8020571967, 8020571683
+        6. some time the invoice number is comming in front of "WIRE TYPE:" that also you need to correct. for example if you found "WIRE TYPE: 8020664304" so '8020664304' is expected invoice number.
+        7. for example if you found any next line in between invoice number then extract the correct invoice number for example if you found 8020695196 8020695999 8020695372 8020698854 802069
+            8706 8020696953 so in invoice number "8020698706" there is next line present so expected invoice numbers are '8020695196', '8020695999', '8020695372', '8020698854', '8020698706', '8020696953'
+        8. for example if you found 20147477 2407318020701205 0 24070200000000 this number then 8020701205 is invoice number and 31/07/2024 is invoice date.
+        9. for example if you found WIRE TYPE: 80207097508020709983802071022380207103398020710338 
+            80207103378020710336 then '8020709750', '8020709983', '8020710223', '8020710339', '8020710338', '8020710337', '8020710336' are invoice numbers
+        10 for example if you found TRACE NUMBER: 053201605985875 then '1605985875' is invoice number because invoice numbers also starts with 80,16 or 14.
+        11. for example if you found WIRE TYPE: 80207110038020711383802071138280207113848020710934 
+ 80207109338020685723 this text in given text so '8020711003', '8020711383', '8020711382', '8020711384', '8020710934', '8020710933', '8020685723' this are invoice numbers.
+    10. in terms of "Credit Amount:" Extract the amount associated with the payment. But if you found for example DEBIT: $3,469.21 in given text then extract 'Debit Amount': '$3,469.21' change the key from 'Credit Amount' to 'Debit Amount'. look at the example4 for more understanding.
+    10. refer the above examples strictlly and find all correct invoice numbers from given text.
+    11. In the text we are using many date formats sometimes it is joined with invoice number sometimes it put separatelly. so once you extract the date for invoice date then convert into mm/dd/yyyy format.
+    12. Extracted Effective date convert into mm/dd/yyyy format.
+    13. Extract the "Deposit Date" as the date found in the header of the page or associated with the page.Once you extract the date for Deposit Date then convert into mm/dd/yyyy format.
+    14. Extracted invoice date then convert into mm/dd/yyyy format.
+    15. Only the exact JSON structure expected as output, without any additional surrounding text or fields.
+    
+
+Example 1:
+Example Input:
+
+Given text:
+
+"FileName: 20240110_EDI_2Page_1.pdf
+PageNo: 1
+TransactionData: PAGE: 00001 BANK OF AMERICA EDI SERVICES REMITTANCE/PAYMENT ADVICE JANUARY 10, 2024 ADVANCED STERILIZATION PRODUCT ATTN: RACHEL BALLESTEROS 6920 SEAWAY BLVD EVERETT, WA 98203 ============================================================================= PAYMENT INFORMATION: CREDIT: $173.52 EFFECTIVE DATE: 01/10/2024 INPUT FORMAT: ACHCCD CREDIT PARTY ------------------------------------- ROUTING ID: 071000039 DEMAND ACCT: 8765332119 DEBIT PARTY ------------------------------------- ROUTING ID: 091000019 ACCT: COMPANY ID: 2834333066 TRACE NUMBER: 053201605985875  RECEIVER: ADVANCED STERILIZATION MUTUALLY DEFINED: 071923284 ORIGINATOR: WAKEMED SPECIALI ============================================================================= REPORT TOTALS: TOTAL TRANSACTIONS: 1 CREDITS: $173.52
+POFilePath: D:\CashApp\2024\Jan\01_10\\20240110_EDI_2.pdf\20240110_EDI_2.pdf
+EDI ReportFilePath: D:\CashApp\2024\Jan\01_10\20240110_EDI_2.pdf\ChildFolder\20240110_EDI_2Page_1.pdf
+CurrentStatus: Start
+Monthly EDI ReportFilePath: D:\CashApp\2024\Jan\MonthlyReport_2024-01.xlsx"
+
+Example output:
+{'extracted_data': {'Type of Payment': 'CREDIT', 'Credit Amount': '$173.52', 'Effective Date': '01/10/2024', 'Deposit Date': '01/10/2024', 'Instructions type': 'ACH', 'Invoice Number and Invoice Date Mappings': {'1605985875': ''}, 'Originator': 'WAKEMED SPECIALI'}, 'EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\01_10\\20240110_EDI_2.pdf\\ChildFolder\\20240110_EDI_2Page_1.pdf', 'Monthly EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\MonthlyReport_2024-01.xlsx', 'Page No': '1', 'File Name': '20240110_EDI_2Page_1.pdf', 'GEN-AI Status': 'Passed'}
+
+Example 2:
+Example input:
+"FileName: 20240110_EDI_1Page_76.pdf
+PageNo: 76
+TransactionData: ADVANCED STERILIZATION PRODUCT JANUARY 10, 2024 PAGE: 00076 ============================================================================= PAYMENT INFORMATION: CREDIT: $980.84 EFFECTIVE DATE: 01/10/2024 INPUT FORMAT: ACHCCD+ CREDIT PARTY ------------------------------------- ROUTING ID: 071000039 DEMAND ACCT: 8765332119 DEBIT PARTY ------------------------------------- ROUTING ID: 021000021 ACCT: COMPANY ID: 1204895317 TRACE NUMBER: 021000025555503 WIRE TYPE: Radiance ASC LLC Bill.com 025DCSJUPSR7NLB Inv 8020 580758 RECEIVER: Advanced Sterilization MUTUALLY DEFINED: 025DCSJUPSR7NLB ORIGINATOR: Radiance ASC LLC ============================================================================= REPORT TOTALS: TOTAL TRANSACTIONS: 64 CREDITS: $610,742.88
+POFilePath: D:\CashApp\2024\Jan\01_10\\20240110_EDI_1.pdf\20240110_EDI_1.pdf
+EDI ReportFilePath: D:\CashApp\2024\Jan\01_10\20240110_EDI_1.pdf\ChildFolder\20240110_EDI_1Page_76.pdf
+CurrentStatus: Start
+Monthly EDI ReportFilePath: D:\CashApp\2024\Jan\MonthlyReport_2024-01.xlsx"
+
+Example output:
+ {'Type of Payment': 'CREDIT', 'Credit Amount': '$980.84', 'Effective Date': '01/10/2024', 'Deposit Date': '01/10/2024', 'Instructions type': 'ACH', 'Invoice Number and Invoice Date Mappings': {'8020580758': ''}, 'Originator': 'Radiance ASC LLC'}, 'EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\01_10\\20240110_EDI_1.pdf\\ChildFolder\\20240110_EDI_1Page_76.pdf', 'Monthly EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\MonthlyReport_2024-01.xlsx', 'Page No': '76', 'File Name': '20240110_EDI_1Page_76.pdf', 'GEN-AI Status': 'Passed'}
+
+Example 3:
+Example input:
+"FileName: 20240110_EDI_1Page_76.pdf
+PageNo: 76
+TransactionData: ADVANCED STERILIZATION PRODUCT JANUARY 10, 2024 PAGE: 00076 ============================================================================= PAYMENT INFORMATION: CREDIT: $980.84 EFFECTIVE DATE: 01/10/2024 INPUT FORMAT: ACHCCD+ CREDIT PARTY ------------------------------------- ROUTING ID: 071000039 DEMAND ACCT: 8765332119 DEBIT PARTY ------------------------------------- ROUTING ID: 021000021 ACCT: COMPANY ID: 1204895317 TRACE NUMBER: 021000025555503 WIRE INSTRUCTIONS: Radiance ASC LLC Bill.com 025DCSJUPSR7NLB Inv 8020 580758 RECEIVER: Advanced Sterilization MUTUALLY DEFINED: 025DCSJUPSR7NLB ORIGINATOR: Radiance ASC LLC ============================================================================= REPORT TOTALS: TOTAL TRANSACTIONS: 64 CREDITS: $610,742.88
+POFilePath: D:\CashApp\2024\Jan\01_10\\20240110_EDI_1.pdf\20240110_EDI_1.pdf
+EDI ReportFilePath: D:\CashApp\2024\Jan\01_10\20240110_EDI_1.pdf\ChildFolder\20240110_EDI_1Page_76.pdf
+CurrentStatus: Start
+Monthly EDI ReportFilePath: D:\CashApp\2024\Jan\MonthlyReport_2024-01.xlsx"
+
+Example output:
+ {'Type of Payment': 'CREDIT', 'Credit Amount': '$980.84', 'Effective Date': '01/10/2024', 'Deposit Date': '01/10/2024', 'Instructions type': 'WIRE', 'Invoice Number and Invoice Date Mappings': {'8020580758': ''}, 'Originator': 'Radiance ASC LLC'}, 'EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\01_10\\20240110_EDI_1.pdf\\ChildFolder\\20240110_EDI_1Page_76.pdf', 'Monthly EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\MonthlyReport_2024-01.xlsx', 'Page No': '76', 'File Name': '20240110_EDI_1Page_76.pdf', 'GEN-AI Status': 'Passed'}
+
+Example 4:
+Example input:
+"FileName: 20240110_EDI_1Page_76.pdf
+PageNo: 76
+TransactionData: ADVANCED STERILIZATION PRODUCT JANUARY 10, 2024 PAGE: 00076 ============================================================================= PAYMENT INFORMATION: DEBIT: $3,469.21 EFFECTIVE DATE: 01/10/2024 INPUT FORMAT: ACHCCD+ CREDIT PARTY ------------------------------------- ROUTING ID: 071000039 DEMAND ACCT: 8765332119 DEBIT PARTY ------------------------------------- ROUTING ID: 021000021 ACCT: COMPANY ID: 1204895317 TRACE NUMBER: 021000025555503 WIRE INSTRUCTIONS: Radiance ASC LLC Bill.com 025DCSJUPSR7NLB Inv 8020 580758 RECEIVER: Advanced Sterilization MUTUALLY DEFINED: 025DCSJUPSR7NLB ORIGINATOR: Radiance ASC LLC ============================================================================= REPORT TOTALS: TOTAL TRANSACTIONS: 64 CREDITS: $610,742.88
+POFilePath: D:\CashApp\2024\Jan\01_10\\20240110_EDI_1.pdf\20240110_EDI_1.pdf
+EDI ReportFilePath: D:\CashApp\2024\Jan\01_10\20240110_EDI_1.pdf\ChildFolder\20240110_EDI_1Page_76.pdf
+CurrentStatus: Start
+Monthly EDI ReportFilePath: D:\CashApp\2024\Jan\MonthlyReport_2024-01.xlsx"
+
+Example output:
+ {'Type of Payment': 'DEBIT', 'Debit Amount': '$3,469.21', 'Effective Date': '01/10/2024', 'Deposit Date': '01/10/2024', 'Instructions type': 'WIRE', 'Invoice Number and Invoice Date Mappings': {'8020580758': ''}, 'Originator': 'Radiance ASC LLC'}, 'EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\01_10\\20240110_EDI_1.pdf\\ChildFolder\\20240110_EDI_1Page_76.pdf', 'Monthly EDI Report File Path': 'D:\\CashApp\\2024\\Jan\\MonthlyReport_2024-01.xlsx', 'Page No': '76', 'File Name': '20240110_EDI_1Page_76.pdf', 'GEN-AI Status': 'Passed'}
+
+
+Explanation:
+
+at every run it should give the fix and constant results.
+
+Prompt Introduction: Clearly states the objective of extracting specific data fields and formatting them into a JSON response.in the prompt given 2 examples for input and output data refer both examples strictlly and give the result
+
+Instructions: Provides detailed steps and conditions for extracting each field, ensuring clarity on how to handle various scenarios mentioned in the prompt.
+
+Example Input: Placeholder for the actual text input where extraction needs to be performed.
+
+Expected Output: The exact JSON structure expected as output, without any additional surrounding text or fields.
